@@ -1,0 +1,19 @@
+[project]
+name = "open-javis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.13.3",
+    "aiosqlite>=0.20.0",
+    "click>=8.3.1",
+    "cryptography>=46.0.5",
+    "litellm>=1.82.4",
+    "pydantic>=2.12.5",
+    "pyyaml>=6.0.3",
+    "rich>=14.3.3",
+    "sqlalchemy>=2.0.48",
+    "tomli>=2.4.0",
+    "websockets>=16.0",
+]

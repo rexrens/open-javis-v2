@@ -1,0 +1,48 @@
+# Open-Javis Agent Manifest
+# Example agent manifest
+
+[agent]
+name = "assistant"
+description = "A helpful personal assistant"
+
+[permissions]
+# Permission categories:
+# * - All permissions
+# tools.basic - Read-only tools
+# tools.exec - Execute tools
+# tools.write - Write tools
+# tools.system - System-level tools
+# llm.read - Read LLM
+# llm.write - Write LLM
+# llm.stream - Stream LLM
+# memory.read - Read memory
+# memory.write - Write memory
+# memory.delete - Delete memory
+# channel.read - Read channels
+# channel.write - Write channels
+# fs.read - Read filesystem
+# fs.write - Write filesystem
+# fs.delete - Delete filesystem
+
+granted = ["*"]
+
+[workspace]
+# Workspace configuration
+inherit_identity_from = "default"
+
+[llm]
+# Agent-specific LLM configuration
+# Inherits from global config if not specified
+model = ""
+temperature = 0.7
+max_tokens = 4096
+
+[memory]
+# Agent-specific memory configuration
+session_max_messages = 200
+
+[skills]
+# Required skills for this agent
+required = []
+# Preferred skills
+preferred = []

@@ -1,0 +1,64 @@
+# Open-Javis Configuration Example
+# Copy this file to javis.toml and customize for your setup
+
+[llm]
+# LLM provider: "anthropic", "openai", "cohere", etc.
+provider = "anthropic"
+# Model identifier
+model = "claude-sonnet-4-20250514"
+# API key environment variable
+api_key_env = "ANTHROPIC_API_KEY"
+# Optional: direct API key (not recommended, use env var)
+# api_key = ""
+# Optional: custom base URL
+# base_url = ""
+# Maximum tokens in response
+max_tokens = 4096
+# Sampling temperature (0-2)
+temperature = 0.7
+# Request timeout in seconds
+timeout = 120
+
+[channels.feishu]
+# Enable Feishu/Lark channel
+enabled = false
+# Feishu/Lark app ID
+app_id = "cli_xxxx"
+# App secret environment variable
+app_secret_env = "FEISHU_APP_SECRET"
+# Region: "cn" for Feishu, "intl" for Lark
+region = "cn"
+# Optional verification token for events
+verify_token = ""
+# Optional AES encryption key
+encrypt_key = ""
+
+[database]
+# SQLite database path (supports ~ expansion)
+path = "~/.javis/javis.db"
+
+[agents.default]
+# Default system prompt for agents
+system_prompt = "You are a helpful personal assistant."
+# Maximum iterations per message
+max_iterations = 100
+# Loop guard threshold (repeated tool calls)
+loop_guard_threshold = 50
+
+[memory]
+# Maximum messages per session
+session_max_messages = 200
+# Enable semantic/vector search
+semantic_enabled = false
+# Semantic provider: "qdrant" or "inmemory"
+semantic_provider = "qdrant"
+# Qdrant server URL
+semantic_url = "http://localhost:6333"
+# Enable knowledge graph
+knowledge_enabled = false
+
+[mcp]
+# Enabled MCP servers (format: server_name)
+enabled_servers = []
+# MCP client timeout
+timeout = 30
