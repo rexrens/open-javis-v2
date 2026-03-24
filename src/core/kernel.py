@@ -16,7 +16,7 @@ from ..tools.skills import SkillRegistry
 from ..runtime.agent_loop import AgentRuntime
 
 
-class Kernel:
+class AgentCore:
     """Central coordinator for Open-Javis.
 
     Manages all subsystems:
@@ -29,7 +29,7 @@ class Kernel:
     """
 
     def __init__(self, config: Optional[JavisConfig] = None):
-        """Initialize the kernel.
+        """Initialize the agent core.
 
         Args:
             config: Optional Javis configuration. If None, loads from file.
@@ -63,7 +63,7 @@ class Kernel:
         self._shutdown_event = asyncio.Event()
 
     async def start(self) -> None:
-        """Start the kernel and all subsystems."""
+        """Start the agent core and all subsystems."""
         if self._running:
             return
 
@@ -91,7 +91,7 @@ class Kernel:
             self._channels.append(feishu)
 
     async def stop(self) -> None:
-        """Stop the kernel and all subsystems."""
+        """Stop the agent core and all subsystems."""
         if not self._running:
             return
 
@@ -107,7 +107,7 @@ class Kernel:
         await self.mcp_client.stop_all()
 
     async def run(self) -> None:
-        """Run the kernel main loop.
+        """Run the agent core main loop.
 
         This starts all channels and processes incoming messages.
         """

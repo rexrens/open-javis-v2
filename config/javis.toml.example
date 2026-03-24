@@ -2,12 +2,31 @@
 # Copy this file to javis.toml and customize for your setup
 
 [llm]
-# LLM provider: "anthropic", "openai", "cohere", etc.
+# LLM provider: "anthropic", "openai", "cohere", "deepseek", etc.
 provider = "anthropic"
 # Model identifier
 model = "claude-sonnet-4-20250514"
 # API key environment variable
 api_key_env = "ANTHROPIC_API_KEY"
+
+# Example for DeepSeek:
+# provider = "deepseek"
+# model = "deepseek-chat"           # General chat model
+# model = "deepseek-coder"           # Code generation model
+# model = "deepseek-reasoner"        # Reasoning model
+# api_key_env = "DEEPSEEK_API_KEY"
+
+# Example for OpenAI Compatible (vLLM, Ollama, LM Studio, etc.):
+# provider = "openai"
+# base_url = "http://localhost:8000/v1"      # Your service endpoint
+# model = "gpt-3.5-turbo"                      # Your model name
+# api_key_env = "OPENAI_API_KEY"              # Set if your service requires auth
+#
+# Common OpenAI Compatible services:
+# - vLLM:      http://localhost:8000/v1
+# - Ollama:    http://localhost:11434/v1
+# - LM Studio: http://localhost:1234/v1
+# - text-generation-webui: http://localhost:5000/v1
 # Optional: direct API key (not recommended, use env var)
 # api_key = ""
 # Optional: custom base URL

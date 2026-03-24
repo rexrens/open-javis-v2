@@ -35,7 +35,13 @@ class LiteLLMDriver:
     - OpenAI (GPT-3.5, GPT-4, etc.)
     - Anthropic (Claude)
     - Google (Gemini)
+    - DeepSeek (deepseek-chat, deepseek-coder, deepseek-reasoner)
+    - OpenAI Compatible (vLLM, Ollama, LM Studio, etc.)
     - And 100+ other providers via LiteLLM
+
+    OpenAI Compatible Usage:
+        Set provider="openai" and base_url to your service endpoint.
+        Example: provider="openai", base_url="http://localhost:8000/v1"
     """
 
     def __init__(

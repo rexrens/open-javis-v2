@@ -23,7 +23,7 @@ src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 from src.core.config import JavisConfig
-from src.core.kernel import Kernel
+from src.core.kernel import AgentCore
 from src.core.agent import AgentState
 
 
@@ -43,17 +43,17 @@ def start(config_file: str):
     """Start the Javis daemon."""
     click.echo("Starting Open-Javis...")
 
-    async def run_kernel():
+    async def run_agent_core():
         config = JavisConfig.load(config_file)
-        kernel = Kernel(config)
+        agent_core = AgentCore(config)
 
         try:
-            await kernel.run()
+            await agent_core.run()
         except KeyboardInterrupt:
             click.echo("\nShutting down...")
-            await kernel.stop()
+            await agent_core.stop()
 
-    asyncio.run(run_kernel())
+    asyncio.run(run_agent_core())
 
 
 @cli.command()
@@ -111,10 +111,10 @@ def agent_list(config_file: str):
     """List all agents."""
     async def list_agents():
         config = JavisConfig.load(config_file)
-        kernel = Kernel(config)
-        await kernel.start()
+        agent_core = AgentCore(config)
+        await agent_core.start()
 
-        agents = await kernel.list_agents()
+        agents = await agent_core.list_agents()
 
         table = Table(title="Agents")
         table.add_column("ID", style="cyan")
@@ -134,7 +134,7 @@ def agent_list(config_file: str):
         console.print(table)
         console.print(f"\nTotal: {len(agents)} agent(s)")
 
-        await kernel.stop()
+        await agent_core.stop()
 
     asyncio.run(list_agents())
 
@@ -147,21 +147,21 @@ def chat(message: str, agent_id: str | None, config_file: str):
     """Send a message to an agent."""
     async def send_message():
         config = JavisConfig.load(config_file)
-        kernel = Kernel(config)
-        await kernel.start()
+        agent_core = AgentCore(config)
+        await agent_core.start()
 
         console.print(f"[cyan]You:[/cyan] {message}")
 
         response = ""
         with console.status("[bold green]Thinking...", spinner="dots") as status:
-            async for chunk in kernel.chat(message, agent_id):
+            async for chunk in agent_core.chat(message, agent_id):
                 if chunk:
                     response += chunk
                     status.update(f"[bold green]Response:[/bold green] {response[:50]}...")
 
         console.print(f"[bold green]Assistant:[/bold green] {response}")
 
-        await kernel.stop()
+        await agent_core.stop()
 
     asyncio.run(send_message())
 
@@ -173,17 +173,17 @@ def agent_kill(agent_id: str, config_file: str):
     """Kill an agent."""
     async def kill_agent():
         config = JavisConfig.load(config_file)
-        kernel = Kernel(config)
-        await kernel.start()
+        agent_core = AgentCore(config)
+        await agent_core.start()
 
-        success = await kernel.kill_agent(agent_id)
+        success = await agent_core.kill_agent(agent_id)
 
         if success:
             click.echo(f"Agent {agent_id} killed.")
         else:
             click.echo(f"Agent {agent_id} not found.")
 
-        await kernel.stop()
+        await agent_core.stop()
 
     asyncio.run(kill_agent())
 
@@ -194,11 +194,11 @@ def tools_list(config_file: str):
     """List all available tools."""
     async def list_tools():
         config = JavisConfig.load(config_file)
-        kernel = Kernel(config)
-        kernel.register_builtin_tools()
-        await kernel.start()
+        agent_core = AgentCore(config)
+        agent_core.register_builtin_tools()
+        await agent_core.start()
 
-        tools = await kernel.list_tools()
+        tools = await agent_core.list_tools()
 
         table = Table(title="Available Tools")
         table.add_column("Name", style="cyan")
@@ -211,7 +211,7 @@ def tools_list(config_file: str):
         console.print(table)
         console.print(f"\nTotal: {len(tools)} tool(s)")
 
-        await kernel.stop()
+        await agent_core.stop()
 
     asyncio.run(list_tools())
 
@@ -228,8 +228,8 @@ def shell(agent_id: str):
 
     async def run_shell():
         config = JavisConfig.load()
-        kernel = Kernel(config)
-        await kernel.start()
+        agent_core = AgentCore(config)
+        await agent_core.start()
 
         console.print(f"[bold green]Open-Javis Shell[/bold green]")
         console.print(f"Agent: {agent_id}")
@@ -249,7 +249,7 @@ def shell(agent_id: str):
 
                 response = ""
                 with console.status("[bold green]Thinking...", spinner="dots") as status:
-                    async for chunk in kernel.chat(user_input, agent_id):
+                    async for chunk in agent_core.chat(user_input, agent_id):
                         if chunk:
                             response += chunk
                             status.update(f"[bold green]Response:[/bold green] {response[:50]}...")
@@ -261,7 +261,7 @@ def shell(agent_id: str):
             except EOFError:
                 break
 
-        await kernel.stop()
+        await agent_core.stop()
 
     try:
         asyncio.run(run_shell())
