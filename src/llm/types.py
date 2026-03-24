@@ -64,7 +64,8 @@ class BaseMessage:
 class SystemMessage(BaseMessage):
     """System message that sets context and behavior."""
 
-    content: str
+    role: MessageRole = MessageRole.SYSTEM
+    content: str = ""
 
     def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for API calls."""
@@ -75,7 +76,8 @@ class SystemMessage(BaseMessage):
 class UserMessage(BaseMessage):
     """User message."""
 
-    content: str
+    role: MessageRole = MessageRole.USER
+    content: str = ""
     name: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -90,6 +92,7 @@ class UserMessage(BaseMessage):
 class AssistantMessage(BaseMessage):
     """Assistant message."""
 
+    role: MessageRole = MessageRole.ASSISTANT
     content: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
     reasoning: Optional[str] = None  # For models with reasoning output
@@ -110,8 +113,9 @@ class AssistantMessage(BaseMessage):
 class ToolMessage(BaseMessage):
     """Tool result message."""
 
-    tool_call_id: str
-    content: str
+    role: MessageRole = MessageRole.TOOL
+    tool_call_id: str = ""
+    content: str = ""
     is_error: bool = False
 
     def to_dict(self) -> dict[str, Any]:

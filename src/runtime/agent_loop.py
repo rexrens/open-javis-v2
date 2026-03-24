@@ -209,7 +209,7 @@ class AgentLoop:
 
         # Add session history
         if include_history:
-            history = self.memory.get_messages(session_id)  # type: ignore
+            history = await self.memory.get_messages(session_id)
             for msg in history:  # type: ignore
                 role = msg.get("role", "user")
                 content = msg.get("content", "")

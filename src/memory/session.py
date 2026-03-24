@@ -22,46 +22,48 @@ class SQLiteSessionStore(SessionStore):
         self.db_path = Path(db_path).expanduser()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.max_messages = max_messages
-
-    async def _get_connection(self) -> aiosqlite.Connection:
-        """Get a database connection with the schema initialized."""
-        conn = await aiosqlite.connect(str(self.db_path))
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS sessions (
-                id TEXT PRIMARY KEY,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                token_count INTEGER DEFAULT 0,
-                message_count INTEGER DEFAULT 0
-            )
-        """)
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                metadata TEXT,
-                token_count INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
-            )
-        """)
-        await conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id)"
-        )
-        await conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at)"
-        )
-        await conn.commit()
-        return conn
+        self._schema_initialized = False
 
     @staticmethod
     def _estimate_tokens(text: str) -> int:
         """Estimate token count from text (rough approximation)."""
         # Simple approximation: ~4 characters per token for English
-        # This is a rough estimate; actual tokenization depends on the model
+        # This is a rough estimate; actual tokenization depends on model
         return max(1, len(text) // 4)
+
+    async def _ensure_schema(self) -> None:
+        """Ensure database schema is initialized."""
+        async with aiosqlite.connect(str(self.db_path)) as conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id TEXT PRIMARY KEY,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    token_count INTEGER DEFAULT 0,
+                    message_count INTEGER DEFAULT 0
+                )
+            """)
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    metadata TEXT,
+                    token_count INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+                )
+            """)
+            await conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id)"
+            )
+            await conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at)"
+            )
+            await conn.commit()
+
+        self._schema_initialized = True
 
     async def _prune_old_messages(self, conn: aiosqlite.Connection, session_id: str) -> None:
         """Prune old messages if exceeding max_messages limit."""
@@ -95,10 +97,14 @@ class SQLiteSessionStore(SessionStore):
         metadata: Optional[dict] = None,
     ) -> bool:
         """Append a message to a session."""
+        # Ensure schema is initialized
+        if not self._schema_initialized:
+            await self._ensure_schema()
+
         token_count = self._estimate_tokens(content)
         metadata_json = json.dumps(metadata) if metadata else None
 
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             # Ensure session exists
             await conn.execute(
                 """
@@ -108,7 +114,7 @@ class SQLiteSessionStore(SessionStore):
                 (session_id,),
             )
 
-            # Insert the message
+            # Insert message
             await conn.execute(
                 """
                 INSERT INTO messages (session_id, role, content, metadata, token_count)
@@ -139,7 +145,7 @@ class SQLiteSessionStore(SessionStore):
         self, session_id: str, limit: Optional[int] = None
     ) -> list[dict]:
         """Get messages from a session."""
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             if limit:
                 cursor = await conn.execute(
                     """
@@ -181,8 +187,8 @@ class SQLiteSessionStore(SessionStore):
             return messages
 
     async def get_message_count(self, session_id: str) -> int:
-        """Get the number of messages in a session."""
-        async with await self._get_connection() as conn:
+        """Get number of messages in a session."""
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             cursor = await conn.execute(
                 "SELECT message_count FROM sessions WHERE id = ?",
                 (session_id,),
@@ -192,7 +198,7 @@ class SQLiteSessionStore(SessionStore):
 
     async def get_session_token_count(self, session_id: str) -> int:
         """Get estimated token count for a session."""
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             cursor = await conn.execute(
                 "SELECT token_count FROM sessions WHERE id = ?",
                 (session_id,),
@@ -202,7 +208,7 @@ class SQLiteSessionStore(SessionStore):
 
     async def clear_session(self, session_id: str) -> bool:
         """Clear all messages in a session."""
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             await conn.execute(
                 "DELETE FROM messages WHERE session_id = ?",
                 (session_id,),
@@ -222,7 +228,7 @@ class SQLiteSessionStore(SessionStore):
 
     async def delete_session(self, session_id: str) -> bool:
         """Delete a session entirely."""
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             cursor = await conn.execute(
                 "DELETE FROM sessions WHERE id = ?",
                 (session_id,),
@@ -232,7 +238,7 @@ class SQLiteSessionStore(SessionStore):
 
     async def list_sessions(self) -> list[dict]:
         """List all sessions."""
-        async with await self._get_connection() as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             cursor = await conn.execute(
                 """
                 SELECT id, created_at, updated_at, token_count, message_count

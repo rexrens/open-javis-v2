@@ -2,4 +2,3 @@
 
 __all__ = ["config", "AgentCore"]
 
-from .kernel import AgentCore
